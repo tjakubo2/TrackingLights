@@ -1,0 +1,9 @@
+G:\SteamLibrary\steamapps\common\Kerbal Space Program\GameData\MyKSPProject\Plugins\MyKSPProject.dll
+G:\SteamLibrary\steamapps\common\Kerbal Space Program\GameData\MyKSPProject\Plugins\MyKSPProject.pdb
+C:\Users\Mark\source\repos\MyKSPProject\MyKSPProject\obj\Release\MyKSPProject.csprojAssemblyReference.cache
+C:\Users\Mark\source\repos\MyKSPProject\MyKSPProject\obj\Release\MyKSPProject.csproj.CoreCompileInputs.cache
+C:\Users\Mark\source\repos\MyKSPProject\MyKSPProject\obj\Release\MyKSPProject.csproj.CopyComplete
+C:\Users\Mark\source\repos\MyKSPProject\MyKSPProject\obj\Release\MyKSPProject.dll
+C:\Users\Mark\source\repos\MyKSPProject\MyKSPProject\obj\Release\MyKSPProject.pdb
+C:\KSP\Kerbal Space Program 1.6.1\GameData\MyKSPProject\Plugins\MyKSPProject.dll
+C:\KSP\Kerbal Space Program 1.6.1\GameData\MyKSPProject\Plugins\MyKSPProject.pdb

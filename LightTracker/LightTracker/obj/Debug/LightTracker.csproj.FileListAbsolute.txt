@@ -1,0 +1,6 @@
+G:\Dropbox\source\repos\LightTracker\LightTracker\bin\Debug\LightTracker.dll
+G:\Dropbox\source\repos\LightTracker\LightTracker\bin\Debug\LightTracker.pdb
+G:\Dropbox\source\repos\LightTracker\LightTracker\obj\Debug\LightTracker.csprojAssemblyReference.cache
+G:\Dropbox\source\repos\LightTracker\LightTracker\obj\Debug\LightTracker.csproj.CoreCompileInputs.cache
+G:\Dropbox\source\repos\LightTracker\LightTracker\obj\Debug\LightTracker.dll
+G:\Dropbox\source\repos\LightTracker\LightTracker\obj\Debug\LightTracker.pdb

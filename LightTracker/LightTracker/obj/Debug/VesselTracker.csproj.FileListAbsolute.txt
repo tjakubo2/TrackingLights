@@ -1,0 +1,12 @@
+C:\Dropbox\source\repos\VesselTracker\VesselTracker\bin\Debug\LightTracker.dll
+C:\Dropbox\source\repos\VesselTracker\VesselTracker\bin\Debug\LightTracker.pdb
+C:\Dropbox\source\repos\VesselTracker\VesselTracker\obj\Debug\VesselTracker.csprojAssemblyReference.cache
+C:\Dropbox\source\repos\VesselTracker\VesselTracker\obj\Debug\VesselTracker.csproj.CoreCompileInputs.cache
+C:\Dropbox\source\repos\VesselTracker\VesselTracker\obj\Debug\LightTracker.dll
+C:\Dropbox\source\repos\VesselTracker\VesselTracker\obj\Debug\LightTracker.pdb
+G:\Dropbox\source\repos\VesselTracker\VesselTracker\bin\Debug\LightTracker.dll
+G:\Dropbox\source\repos\VesselTracker\VesselTracker\bin\Debug\LightTracker.pdb
+G:\Dropbox\source\repos\VesselTracker\VesselTracker\obj\Debug\VesselTracker.csprojAssemblyReference.cache
+G:\Dropbox\source\repos\VesselTracker\VesselTracker\obj\Debug\VesselTracker.csproj.CoreCompileInputs.cache
+G:\Dropbox\source\repos\VesselTracker\VesselTracker\obj\Debug\LightTracker.dll
+G:\Dropbox\source\repos\VesselTracker\VesselTracker\obj\Debug\LightTracker.pdb
