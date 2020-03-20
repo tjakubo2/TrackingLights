@@ -1,0 +1,21 @@
+Changelog
+
+0.2.0
+	Adoption by Linuxgurugamer
+	Added AssemblyVerison.tt
+	Added InstallChecker.cs
+	Added Changelog.txt
+	Added .version file
+	Rebuilt for 1.8/1.9
+	Added tags to parts
+	Updated tags in MM-CCK-Lights.cfg patch
+
+1.0
+	Tracking Lights for KSP v1.0
+	Updated name from LaunchPadLamp mod to Tracking Lights
+	Added ModuleLightTracker to allow lights to track current vessel or the vessel's current target
+	Updated models/textures
+	Added new M.T.S. light intended to be used on launched vessels
+
+V1
+	Initial release, Launch Pad Lamp

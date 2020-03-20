@@ -1,0 +1,20 @@
+{
+  "NAME": "TrackingLights",
+  "URL": "http://ksp.spacetux.net/avc/TrackingLights",
+  "DOWNLOAD": "https://github.com/linuxgurugamer/TrackingLights/releases",
+  "GITHUB": {
+    "USERNAME": "linuxgurugamer",
+    "REPOSITORY": "TrackingLights"
+  },
+  "VERSION": {
+    "MAJOR": 0,
+    "MINOR": 0,
+    "PATCH": 2,
+    "BUILD": 0
+  },
+  "KSP_VERSION_MIN": {
+    "MAJOR": 1,
+    "MINOR": 8,
+    "PATCH": 0
+  }
+}

@@ -4,3 +4,7 @@ G:\Dropbox\source\repos\LightTracker\LightTracker\obj\Debug\LightTracker.csprojA
 G:\Dropbox\source\repos\LightTracker\LightTracker\obj\Debug\LightTracker.csproj.CoreCompileInputs.cache
 G:\Dropbox\source\repos\LightTracker\LightTracker\obj\Debug\LightTracker.dll
 G:\Dropbox\source\repos\LightTracker\LightTracker\obj\Debug\LightTracker.pdb
+D:\Users\jbb\github\TrackingLights\LightTracker\obj\Debug\LightTracker.dll
+D:\Users\jbb\github\TrackingLights\LightTracker\obj\Debug\LightTracker.pdb
+D:\Users\jbb\github\TrackingLights\LightTracker\bin\Debug\LightTracker.dll
+D:\Users\jbb\github\TrackingLights\LightTracker\bin\Debug\LightTracker.pdb
