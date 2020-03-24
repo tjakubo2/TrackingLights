@@ -8,3 +8,4 @@ D:\Users\jbb\github\TrackingLights\LightTracker\obj\Debug\LightTracker.dll
 D:\Users\jbb\github\TrackingLights\LightTracker\obj\Debug\LightTracker.pdb
 D:\Users\jbb\github\TrackingLights\LightTracker\bin\Debug\LightTracker.dll
 D:\Users\jbb\github\TrackingLights\LightTracker\bin\Debug\LightTracker.pdb
+D:\Users\jbb\github\TrackingLights\LightTracker\obj\Debug\LightTracker.csprojAssemblyReference.cache

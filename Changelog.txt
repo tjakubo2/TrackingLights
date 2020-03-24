@@ -1,8 +1,11 @@
 Changelog
 
+0.2.0.1
+	Fixed bad KIS patch in MM-KIS.cfg 
+
 0.2.0
 	Adoption by Linuxgurugamer
-	Added AssemblyVerison.tt
+	Added AssemblyVersion.tt
 	Added InstallChecker.cs
 	Added Changelog.txt
 	Added .version file
