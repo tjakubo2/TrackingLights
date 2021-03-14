@@ -8,63 +8,71 @@ namespace LightTracker
         // Setup KSPFields and set default (false) bool values
 
         [KSPField(isPersistant = true)]
-        private bool IsTrackingCurrentTarget;
+        private bool IsTracking;
+
+        internal enum TrackMode
+        {
+            TargetVessel,
+            ActiveVessel
+        }
 
         [KSPField(isPersistant = true)]
-        private bool TrackingDisabledField;
+        private TrackMode SelectedTrackMode;
 
         // Setup UI sliders to control lights in flight and set values
 
         [KSPField(guiName = "Intensity", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0f, maxValue = 10f, stepIncrement = 0.05f)]
-        public float IntensityField = 1f;
+        public float LightIntensity = 1f;
 
         [KSPField(guiName = "Range", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 1f, maxValue = 5f, stepIncrement = 0.05f)]
-        public float RangeField = 1f;
+        public float LightRange = 1f;
 
         [KSPField(guiName = "Cone Size", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 1f, maxValue = 80f, stepIncrement = 1f)]
-        public float ConeAngleField = 30f;
+        public float LightConeAngle = 30f;
 
         [KSPField(guiName = "Light R", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0.00f, maxValue = 1f, stepIncrement = 0.05f, scene = UI_Scene.Flight)]
-        public float RColorField = 1f;
+        public float LightColorR = 1f;
 
         [KSPField(guiName = "Light G", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0.00f, maxValue = 1f, stepIncrement = 0.05f, scene = UI_Scene.Flight)]
-        public float GColorField = 1f;
+        public float LightColorG = 1f;
 
         [KSPField(guiName = "Light B", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0.00f, maxValue = 1f, stepIncrement = 0.05f, scene = UI_Scene.Flight)]
-        public float BColorField = 1f;
+        public float LightColorB = 1f;
 
-        // Add right click menu fields and events
-
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Tracking: Disabled")]
-        public void ActivateEvent()
+        // Tracking on/off
+        [KSPEvent(guiActive = true, guiActiveEditor = true)]
+        public void ToggleTracking()
         {
-            TrackingDisabledField = false;
-            Events["ActivateEvent"].active = false;
-            Events["DeactivateEvent"].active = true;
+            IsTracking = !IsTracking;
+            UpdateTrackingControl();
+        }
+        private void UpdateTrackingControl()
+        {
+            Events["ToggleTracking"].guiName = $"Tracking: {(IsTracking ? "Enabled" : "Disabled")}";
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Tracking: Enabled")]
-        public void DeactivateEvent()
+        // Track mode cycle
+        [KSPEvent(guiActive = true, guiActiveEditor = true)]
+        public void CycleTrackMode()
         {
-            TrackingDisabledField = true;
-            Events["ActivateEvent"].active = true;
-            Events["DeactivateEvent"].active = false;
+            SelectedTrackMode = SelectedTrackMode.Next();
+            UpdateTrackModeControl();
         }
-
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Target: Current Target")]
-        public void TrackCurrentTargetEvent()
+        private void UpdateTrackModeControl()
         {
-            IsTrackingCurrentTarget = false;
-            Events["TrackCurrentTargetEvent"].active = false;
-            Events["TrackActiveVesselEvent"].active = true;
+            Events["CycleTrackMode"].guiName = $"Targeting: {LabelFor(SelectedTrackMode)}";
         }
-
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Target: Active Vessel")]
-        public void TrackActiveVesselEvent()
+        private string LabelFor(TrackMode mode)
         {
-            IsTrackingCurrentTarget = true;
-            Events["TrackCurrentTargetEvent"].active = true;
-            Events["TrackActiveVesselEvent"].active = false;
+            switch (mode)
+            {
+                case TrackMode.ActiveVessel:
+                    return "Active vessel";
+                case TrackMode.TargetVessel:
+                    return "Target vessel";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(mode));
+            }
         }
 
         public override void OnStart(PartModule.StartState state)
@@ -74,13 +82,13 @@ namespace LightTracker
             var unitylight = part.GetComponentInChildren<Light>();
             var lightColor = new Color
             {
-                r = RColorField * IntensityField,
-                g = GColorField * IntensityField,
-                b = BColorField * IntensityField
+                r = LightColorR * LightIntensity,
+                g = LightColorG * LightIntensity,
+                b = LightColorB * LightIntensity
             };
-            unitylight.range = 100 * (float)Math.Pow(RangeField, RangeField);
+            unitylight.range = 100 * (float)Math.Pow(LightRange, LightRange);
             unitylight.color = lightColor;
-            unitylight.spotAngle = ConeAngleField;
+            unitylight.spotAngle = LightConeAngle;
 
 
             // Disable stock UI elements that are unnecessary from ModuleAnimateGeneric... assuming mouse will be used instead
@@ -136,37 +144,20 @@ namespace LightTracker
             UIRangeField = (UI_FloatRange)Fields["ConeAngleField"].uiControlEditor;
             UIRangeField.onFieldChanged += OnUISliderChange;
 
-            // Initialize scene start values for the right click menu buttons
-            if (TrackingDisabledField == false)
-            {
-                Events["ActivateEvent"].active = false;
-                Events["DeactivateEvent"].active = true;
-            }
-            else
-            {
-                Events["ActivateEvent"].active = true;
-                Events["DeactivateEvent"].active = false;
-            }
-            if (IsTrackingCurrentTarget == true)
-            {
-                Events["TrackCurrentTargetEvent"].active = true;
-                Events["TrackActiveVesselEvent"].active = false;
-            }
-            else
-            {
-                Events["TrackCurrentTargetEvent"].active = false;
-                Events["TrackActiveVesselEvent"].active = true;
-            }
+            UpdateTrackingControl();
+            UpdateTrackModeControl();
+
+            base.OnStart(state);
         }
 
 
         public void LateUpdate()
         {
             // Check to make sure tracking isn't disabled and that there is a valid vessel attached to the part
-            if (!TrackingDisabledField && part.vessel != null)
+            if (!IsTracking && part.vessel != null)
             {
                 // Are we tracking the current target?
-                if (IsTrackingCurrentTarget)
+                if (IsTracking)
                 {
                     // Check to prevent NRE's
                     if (vessel?.targetObject != null)
@@ -215,14 +206,14 @@ namespace LightTracker
             {
                 var lightColor = new Color
                 {
-                    r = RColorField * IntensityField,
-                    g = GColorField * IntensityField,
-                    b = BColorField * IntensityField
+                    r = LightColorR * LightIntensity,
+                    g = LightColorG * LightIntensity,
+                    b = LightColorB * LightIntensity
                 };
                 var unitylight = part.GetComponentInChildren<Light>();
-                unitylight.range = 100 * (float)Math.Pow(RangeField, RangeField);
+                unitylight.range = 100 * (float)Math.Pow(LightRange, LightRange);
                 unitylight.color = lightColor;
-                unitylight.spotAngle = ConeAngleField;
+                unitylight.spotAngle = LightConeAngle;
             }
 
             // Handle Symmetry in editor
@@ -232,28 +223,28 @@ namespace LightTracker
 
                 var lightColor = new Color
                 {
-                    r = modulelight.lightR * IntensityField,
-                    g = modulelight.lightG * IntensityField,
-                    b = modulelight.lightB * IntensityField
+                    r = modulelight.lightR * LightIntensity,
+                    g = modulelight.lightG * LightIntensity,
+                    b = modulelight.lightB * LightIntensity
                 };
                 var unitylight = part.GetComponentInChildren<Light>();
-                unitylight.range = 100 * (float)Math.Pow(RangeField, RangeField);
+                unitylight.range = 100 * (float)Math.Pow(LightRange, LightRange);
                 unitylight.color = lightColor;
-                unitylight.spotAngle = ConeAngleField;
-                RColorField = modulelight.lightR;
-                GColorField = modulelight.lightG;
-                BColorField = modulelight.lightB;
+                unitylight.spotAngle = LightConeAngle;
+                LightColorR = modulelight.lightR;
+                LightColorG = modulelight.lightG;
+                LightColorB = modulelight.lightB;
 
                 foreach (var part in part.symmetryCounterparts)
                 {
                     var lighttrackermodule = part.FindModuleImplementing<ModuleLightTracker>();
                     unitylight = part.GetComponentInChildren<Light>();
-                    unitylight.range = 100 * (float)Math.Pow(RangeField, RangeField);
+                    unitylight.range = 100 * (float)Math.Pow(LightRange, LightRange);
                     unitylight.color = lightColor;
-                    unitylight.spotAngle = ConeAngleField;
-                    lighttrackermodule.RColorField = modulelight.lightR;
-                    lighttrackermodule.GColorField = modulelight.lightG;
-                    lighttrackermodule.BColorField = modulelight.lightB;
+                    unitylight.spotAngle = LightConeAngle;
+                    lighttrackermodule.LightColorR = modulelight.lightR;
+                    lighttrackermodule.LightColorG = modulelight.lightG;
+                    lighttrackermodule.LightColorB = modulelight.lightB;
                 }
             }
         }
