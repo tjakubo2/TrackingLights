@@ -23,3 +23,11 @@ namespace LightTracker
         }
     }
 }
+
+namespace LightTracker.Attributes
+{
+    class LightPropertyAttribute : Attribute
+    {
+        public LightPropertyAttribute() { }
+    }
+}

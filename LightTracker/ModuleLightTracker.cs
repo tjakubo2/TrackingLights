@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Linq;
 using UnityEngine;
+
+using LightTracker.Attributes;
 
 namespace LightTracker
 {
@@ -19,24 +22,22 @@ namespace LightTracker
         [KSPField(isPersistant = true)]
         private TrackMode SelectedTrackMode;
 
-        // Setup UI sliders to control lights in flight and set values
-
-        [KSPField(guiName = "Intensity", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0f, maxValue = 10f, stepIncrement = 0.05f)]
+        [LightProperty, KSPField(guiName = "Intensity", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0f, maxValue = 10f, stepIncrement = 0.05f)]
         public float LightIntensity = 1f;
 
-        [KSPField(guiName = "Range", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 1f, maxValue = 5f, stepIncrement = 0.05f)]
+        [LightProperty, KSPField(guiName = "Range", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 1f, maxValue = 5f, stepIncrement = 0.05f)]
         public float LightRange = 1f;
 
-        [KSPField(guiName = "Cone Size", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 1f, maxValue = 80f, stepIncrement = 1f)]
+        [LightProperty, KSPField(guiName = "Cone Size", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 1f, maxValue = 80f, stepIncrement = 1f)]
         public float LightConeAngle = 30f;
 
-        [KSPField(guiName = "Light R", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0.00f, maxValue = 1f, stepIncrement = 0.05f, scene = UI_Scene.Flight)]
+        [LightProperty, KSPField(guiName = "Light R", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0.00f, maxValue = 1f, stepIncrement = 0.05f, scene = UI_Scene.Flight)]
         public float LightColorR = 1f;
 
-        [KSPField(guiName = "Light G", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0.00f, maxValue = 1f, stepIncrement = 0.05f, scene = UI_Scene.Flight)]
+        [LightProperty, KSPField(guiName = "Light G", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0.00f, maxValue = 1f, stepIncrement = 0.05f, scene = UI_Scene.Flight)]
         public float LightColorG = 1f;
 
-        [KSPField(guiName = "Light B", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0.00f, maxValue = 1f, stepIncrement = 0.05f, scene = UI_Scene.Flight)]
+        [LightProperty, KSPField(guiName = "Light B", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0.00f, maxValue = 1f, stepIncrement = 0.05f, scene = UI_Scene.Flight)]
         public float LightColorB = 1f;
 
         // Tracking on/off
@@ -114,35 +115,17 @@ namespace LightTracker
                 }
             }
 
-            // Add events to the UI sliders instead of checking every frame
-            UI_FloatRange UIRangeField;
+            // Hook up light props to change the underlying Unity light on the fly
+            var lightFieldsNames = GetType()
+                .GetFields()
+                .Where(prop => Attribute.IsDefined(prop, typeof(LightPropertyAttribute)))
+                .Select(prop => prop.Name);
 
-            UIRangeField = (UI_FloatRange)Fields["IntensityField"].uiControlFlight;
-            UIRangeField.onFieldChanged += OnUISliderChange;
-
-            UIRangeField = (UI_FloatRange)Fields["RangeField"].uiControlFlight;
-            UIRangeField.onFieldChanged += OnUISliderChange;
-
-            UIRangeField = (UI_FloatRange)Fields["ConeAngleField"].uiControlFlight;
-            UIRangeField.onFieldChanged += OnUISliderChange;
-
-            UIRangeField = (UI_FloatRange)Fields["RColorField"].uiControlFlight;
-            UIRangeField.onFieldChanged += OnUISliderChange;
-
-            UIRangeField = (UI_FloatRange)Fields["GColorField"].uiControlFlight;
-            UIRangeField.onFieldChanged += OnUISliderChange;
-
-            UIRangeField = (UI_FloatRange)Fields["BColorField"].uiControlFlight;
-            UIRangeField.onFieldChanged += OnUISliderChange;
-
-            UIRangeField = (UI_FloatRange)Fields["IntensityField"].uiControlEditor;
-            UIRangeField.onFieldChanged += OnUISliderChange;
-
-            UIRangeField = (UI_FloatRange)Fields["RangeField"].uiControlEditor;
-            UIRangeField.onFieldChanged += OnUISliderChange;
-
-            UIRangeField = (UI_FloatRange)Fields["ConeAngleField"].uiControlEditor;
-            UIRangeField.onFieldChanged += OnUISliderChange;
+            foreach (var fieldName in lightFieldsNames)
+            {
+                Fields[fieldName].uiControlFlight.onFieldChanged += OnLightSettingChanged;
+                Fields[fieldName].uiControlEditor.onFieldChanged += OnLightSettingChanged;
+            }
 
             UpdateTrackingControl();
             UpdateTrackModeControl();
@@ -198,55 +181,68 @@ namespace LightTracker
             lightCanTransform.localEulerAngles = new Vector3(lightCanTransform.localEulerAngles.x, 0, 0);
         }
 
-        // Updates the Unity light object to override the normal LightModule.  Allows setting of RGB, Range, Spot angle
-        private void OnUISliderChange(BaseField field, object obj)
+        #region LightPropertiesLogic
+
+        private static void ApplyLightSettings(Light light, Color color, float intensity, float range, float spotAngle)
         {
-            // In flight logic, no symmetry
-            if (!HighLogic.LoadedSceneIsEditor)
+            var scaledColor = new Color
             {
-                var lightColor = new Color
-                {
-                    r = LightColorR * LightIntensity,
-                    g = LightColorG * LightIntensity,
-                    b = LightColorB * LightIntensity
-                };
-                var unitylight = part.GetComponentInChildren<Light>();
-                unitylight.range = 100 * (float)Math.Pow(LightRange, LightRange);
-                unitylight.color = lightColor;
-                unitylight.spotAngle = LightConeAngle;
-            }
+                r = color.r * intensity,
+                g = color.g * intensity,
+                b = color.b * intensity
+            };
+            light.range = 100 * (float) Math.Pow(range, range);
+            light.color = scaledColor;
+            light.spotAngle = spotAngle;
+        }
 
-            // Handle Symmetry in editor
-            else
+        private void ApplyLightSettings(Light light)
+        {
+            var color = new Color
             {
-                var modulelight = part.FindModuleImplementing<ModuleLight>();
+                r = LightColorR,
+                g = LightColorG,
+                b = LightColorB
+            };
+            ApplyLightSettings(light, color, LightIntensity, LightRange, LightConeAngle);
+        }
 
-                var lightColor = new Color
-                {
-                    r = modulelight.lightR * LightIntensity,
-                    g = modulelight.lightG * LightIntensity,
-                    b = modulelight.lightB * LightIntensity
-                };
-                var unitylight = part.GetComponentInChildren<Light>();
-                unitylight.range = 100 * (float)Math.Pow(LightRange, LightRange);
-                unitylight.color = lightColor;
-                unitylight.spotAngle = LightConeAngle;
-                LightColorR = modulelight.lightR;
-                LightColorG = modulelight.lightG;
-                LightColorB = modulelight.lightB;
+        // Apply prop settings to underlying Unity light
+        public void ApplyLightSettings()
+        {
+            var light = part.GetComponentInChildren<Light>();
+            ApplyLightSettings(light);
+        }
 
-                foreach (var part in part.symmetryCounterparts)
+        // Read RGB values from stock KSP light module and copy to local props - for tweaking in the editor
+        public void ReadStockLightColorValues()
+        {
+            var kspLight = part.FindModuleImplementing<ModuleLight>();
+            LightColorR = kspLight.lightR;
+            LightColorG = kspLight.lightG;
+            LightColorB = kspLight.lightB;
+        }
+
+        // Updates underlying Unity lights with selected prop values
+        // In the editor RGB settings are puled from stock KSP light module sliders
+        private void OnLightSettingChanged(BaseField field, object obj)
+        {
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                ReadStockLightColorValues();
+
+                foreach (var otherPart in part.symmetryCounterparts)
                 {
-                    var lighttrackermodule = part.FindModuleImplementing<ModuleLightTracker>();
-                    unitylight = part.GetComponentInChildren<Light>();
-                    unitylight.range = 100 * (float)Math.Pow(LightRange, LightRange);
-                    unitylight.color = lightColor;
-                    unitylight.spotAngle = LightConeAngle;
-                    lighttrackermodule.LightColorR = modulelight.lightR;
-                    lighttrackermodule.LightColorG = modulelight.lightG;
-                    lighttrackermodule.LightColorB = modulelight.lightB;
+                    var otherPartTracker = otherPart.FindModuleImplementing<ModuleLightTracker>();
+
+                    otherPartTracker.ReadStockLightColorValues();
+                    otherPartTracker.ApplyLightSettings();
                 }
             }
+
+            ApplyLightSettings();
         }
+
+        #endregion
     }
 }
