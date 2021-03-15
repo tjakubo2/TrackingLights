@@ -26,6 +26,7 @@ namespace LightTracker
 
 namespace LightTracker.Attributes
 {
+    // Attrib for props that require an update to underlying Unity light
     class LightPropertyAttribute : Attribute
     {
         public LightPropertyAttribute() { }

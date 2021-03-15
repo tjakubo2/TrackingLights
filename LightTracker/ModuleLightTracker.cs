@@ -78,20 +78,6 @@ namespace LightTracker
 
         public override void OnStart(PartModule.StartState state)
         {
-            // Initialize lights to use custom values saved from KSP fields
-
-            var unitylight = part.GetComponentInChildren<Light>();
-            var lightColor = new Color
-            {
-                r = LightColorR * LightIntensity,
-                g = LightColorG * LightIntensity,
-                b = LightColorB * LightIntensity
-            };
-            unitylight.range = 100 * (float)Math.Pow(LightRange, LightRange);
-            unitylight.color = lightColor;
-            unitylight.spotAngle = LightConeAngle;
-
-
             // Disable stock UI elements that are unnecessary from ModuleAnimateGeneric... assuming mouse will be used instead
             foreach (var module in part.FindModulesImplementing<ModuleAnimateGeneric>())
             {
@@ -133,6 +119,11 @@ namespace LightTracker
             base.OnStart(state);
         }
 
+        public override void OnStartFinished(StartState state)
+        {
+            ApplyLightSettings();
+            base.OnStartFinished(state);
+        }
 
         public void LateUpdate()
         {
@@ -224,7 +215,7 @@ namespace LightTracker
         }
 
         // Updates underlying Unity lights with selected prop values
-        // In the editor RGB settings are puled from stock KSP light module sliders
+        // In the editor RGB settings are pulled from stock KSP light module sliders
         private void OnLightSettingChanged(BaseField field, object obj)
         {
             if (HighLogic.LoadedSceneIsEditor)
