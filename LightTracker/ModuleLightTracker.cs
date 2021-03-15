@@ -8,8 +8,6 @@ namespace LightTracker
 {
     public class ModuleLightTracker : PartModule
     {
-        // Setup KSPFields and set default (false) bool values
-
         [KSPField(isPersistant = true)]
         private bool IsTracking;
 
@@ -21,6 +19,18 @@ namespace LightTracker
 
         [KSPField(isPersistant = true)]
         private TrackMode SelectedTrackMode;
+
+        [KSPField(isPersistant = true)]
+        private bool RestWithoutTarget;
+
+        [KSPField(guiName = "Tracking Speed", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 5f, maxValue = 180f, stepIncrement = 1f)]
+        public float TrackingSpeed = 45f;
+
+        [KSPField(guiName = "Resting Pitch", guiActive = true, isPersistant = true), UI_FloatRange(minValue = -90f, maxValue = 90f, stepIncrement = 1f, scene = UI_Scene.Flight)]
+        public float RestingPitch = 0f;
+
+        [KSPField(guiName = "Resting Yaw", guiActive = true, isPersistant = true), UI_FloatRange(minValue = -180f, maxValue = 180f, stepIncrement = 1f, scene = UI_Scene.Flight)]
+        public float RestingYaw = 0f;
 
         [LightProperty, KSPField(guiName = "Intensity", guiActive = true, isPersistant = true), UI_FloatRange(minValue = 0f, maxValue = 10f, stepIncrement = 0.05f)]
         public float LightIntensity = 1f;
@@ -76,7 +86,19 @@ namespace LightTracker
             }
         }
 
-        public override void OnStart(PartModule.StartState state)
+        // Rest without target on/off
+        [KSPEvent(guiActive = true, guiActiveEditor = true)]
+        public void ToggleRestWithoutTarget()
+        {
+            RestWithoutTarget = !RestWithoutTarget;
+            UpdateRestWithoutTargetControl();
+        }
+        private void UpdateRestWithoutTargetControl()
+        {
+            Events["ToggleRestWithoutTarget"].guiName = $"When no target: {(RestWithoutTarget ? "Return to rest" : "Keep orientation")}";
+        }
+
+        public override void OnStart(StartState state)
         {
             // Disable stock UI elements that are unnecessary from ModuleAnimateGeneric... assuming mouse will be used instead
             foreach (var module in part.FindModulesImplementing<ModuleAnimateGeneric>())
@@ -91,14 +113,6 @@ namespace LightTracker
                 module.Fields["endEventGUIName"].guiActiveEditor = false;
                 module.Events["Toggle"].guiActiveEditor = false;
                 module.Fields["status"].guiActiveEditor = false;
-                if (module.animationName == "lamptilt")
-                {
-                    module.Fields["deployPercent"].guiName = "Tilt";
-                }
-                else if (module.animationName == "lamprotate")
-                {
-                    module.Fields["deployPercent"].guiName = "Rotate";
-                }
             }
 
             // Hook up light props to change the underlying Unity light on the fly
@@ -115,6 +129,7 @@ namespace LightTracker
 
             UpdateTrackingControl();
             UpdateTrackModeControl();
+            UpdateRestWithoutTargetControl();
 
             base.OnStart(state);
         }
@@ -125,53 +140,92 @@ namespace LightTracker
             base.OnStartFinished(state);
         }
 
-        public void LateUpdate()
+        #region TrackingLogic
+
+        // Get tracked target *position* (at which light should point)
+        Vector3? GetTrackTarget(TrackMode mode)
         {
-            // Check to make sure tracking isn't disabled and that there is a valid vessel attached to the part
-            if (!IsTracking && part.vessel != null)
+            switch (mode)
             {
-                // Are we tracking the current target?
-                if (IsTracking)
-                {
-                    // Check to prevent NRE's
-                    if (vessel?.targetObject != null)
+                case TrackMode.ActiveVessel:
                     {
-                        if (vessel != vessel.targetObject.GetVessel())
-                        {
-                            TrackTarget(vessel.targetObject.GetTransform());
-                        }
+                        if (vessel == FlightGlobals.ActiveVessel)
+                            return null;
+
+                        return FlightGlobals.ActiveVessel?.transform.position;
                     }
-                }
-                // or active vessel is default case
-                else
-                {
-                    if (vessel != FlightGlobals.ActiveVessel)
+
+                case TrackMode.TargetVessel:
                     {
-                        TrackTarget(FlightGlobals.ActiveVessel.transform);
+                        if (vessel == vessel?.targetObject?.GetVessel())
+                            return null;
+
+                        return vessel?.targetObject?.GetTransform().position;
                     }
-                }
+
+                default:
+                    return null;
             }
         }
+        Vector3? GetTrackTarget() => GetTrackTarget(SelectedTrackMode);
 
-        private void TrackTarget(Transform target)
+        // Get the direction for light to point at a target
+        Vector3? GetTrackDirection()
         {
-            //set transforms to variables
+            Vector3? target = GetTrackTarget();
+            if (target.HasValue)
+            {
+                Transform lightCanTransform = transform.GetChild(0).GetChild(0);
+                return target - lightCanTransform.position;
+            }
+            return null;
+        }
+
+        // Get the direction for light to point at without target (based on settings)
+        Vector3 GetRestingDirection()
+        {
+            Quaternion yawRotation = Quaternion.AngleAxis(RestingYaw, transform.up);
+            Quaternion pitchRotation = Quaternion.AngleAxis(RestingPitch, yawRotation * transform.right);
+
+            return pitchRotation * (yawRotation * transform.forward);
+        }
+
+        // Get current desired light forward direction (based on current setting)
+        Vector3? GetTargetDirection()
+        {
+            if (IsTracking)
+                return GetTrackDirection() ?? (RestWithoutTarget ? GetRestingDirection() : (Vector3?) null);
+            else
+                return GetRestingDirection();
+        }
+
+        public void LateUpdate()
+        {
+            if (part.vessel == null)
+                return;
+
+            var targetDir = GetTargetDirection();
+            if (targetDir.HasValue)
+                TurnTowards(targetDir.Value);
+        }
+
+        // Turn towards given forward direction respecting tracking speed
+        private void TurnTowards(Vector3 forward)
+        {
             Transform baseTransform = transform.GetChild(0);
             Transform lightCanTransform = transform.GetChild(0).GetChild(0);
 
-            //calculate the directional vector, then calculate Quaternion
-            Vector3 dir = target.transform.position - lightCanTransform.position;
-            Quaternion lookRot = Quaternion.LookRotation(dir, lightCanTransform.up);
+            Quaternion targetRot = Quaternion.LookRotation(forward, lightCanTransform.up);
+            Quaternion lookRot = Quaternion.RotateTowards(lightCanTransform.rotation, targetRot, TrackingSpeed * Time.deltaTime);
 
-            //set the base rotation to the lookrotation and set x and z to 0 to only rotate on y
             baseTransform.rotation = lookRot;
             baseTransform.localEulerAngles = new Vector3(0, baseTransform.localEulerAngles.y, 0);
 
-            //set the lightCanTransform rotation to the lookrotation and set the y and z to 0 to only rotate on x
             lightCanTransform.rotation = lookRot;
             lightCanTransform.localEulerAngles = new Vector3(lightCanTransform.localEulerAngles.x, 0, 0);
         }
 
+        #endregion
         #region LightPropertiesLogic
 
         private static void ApplyLightSettings(Light light, Color color, float intensity, float range, float spotAngle)
