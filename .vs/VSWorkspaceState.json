@@ -1,13 +1,13 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Gamedata",
-    "\\Gamedata\\TrackingLights",
-    "\\Gamedata\\TrackingLights\\MM_Patches",
-    "\\Gamedata\\TrackingLights\\Parts",
-    "\\Gamedata\\TrackingLights\\Parts\\LaunchPadLamp",
-    "\\Gamedata\\TrackingLights\\Parts\\MTS"
+    "\\GameData",
+    "\\GameData\\TrackingLights",
+    "\\GameData\\TrackingLights\\MM_Patches",
+    "\\GameData\\TrackingLights\\Parts",
+    "\\GameData\\TrackingLights\\Parts\\LaunchPadLamp",
+    "\\GameData\\TrackingLights\\Parts\\MTS"
   ],
-  "SelectedNode": "\\Gamedata\\TrackingLights\\MM_Patches\\MM-CCK-Lights.cfg",
+  "SelectedNode": "\\GameData\\TrackingLights\\MM_Patches\\MM-KIS.cfg",
   "PreviewInSolutionExplorer": false
 }
