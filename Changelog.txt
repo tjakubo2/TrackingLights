@@ -1,10 +1,14 @@
 Changelog
 
-0.2.2
+0.2.2.3
 	Tracking is now smooth with an andjustable speed slider
 	Replaced manual direction controls with simple pitch/yaw sliders
 	Added a toggle to either return to "resting" position or keep orientation when target is lost
 	Fixed color not properly restoring after loading a save
+
+0.0.2.2
+	Added AssemblyFileVersion
+	Updated version file for 1.12
 
 0.2.1
 	Fixed bad KIS patch in MM-KIS.cfg 
